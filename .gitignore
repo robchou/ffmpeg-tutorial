@@ -10,4 +10,8 @@
 *.lai
 *.la
 *.a
-
+tags
+build
+bin
+.idea
+cmake-build-debug
