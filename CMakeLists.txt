@@ -1,6 +1,10 @@
 cmake_minimum_required(VERSION 3.2)
 project(ffmpeg-tutorial)
 
+if(UNIX AND NOT APPLE AND NOT ANDROID)
+    set(LINUX TRUE)
+endif()
+
 set(ffmpeg_tutorial_source_files
     tutorial01.c
     tutorial02.c
@@ -11,9 +15,19 @@ set(ffmpeg_tutorial_source_files
     tutorial07.c
     )
 
+# make sure ffmpeg 2.8.x(2.8.5 and 2.8.15 tested) and sdl1.2 list in PKG_CONFIG_PATH
+find_package(PkgConfig REQUIRED)
+pkg_check_modules(FFMPEG libavcodec libavformat libavutil libswscale libswresample)
+pkg_check_modules(SDL sdl)
+
 include_directories(
-    /usr/local/Cellar/ffmpeg@2.8/2.8.15_3/include
-    /usr/local/include/SDL
+    ${FFMPEG_INCLUDE_DIRS}
+    ${SDL_INCLUDE_DIRS}
+    )
+
+link_directories(
+    ${FFMPEG_LIBRARY_DIRS}
+    ${SDL_LIBRARY_DIRS}
     )
 
 add_definitions(
@@ -21,24 +35,28 @@ add_definitions(
     -D_THREAD_SAFE
     )
 
-find_library(COCOA_FRAMEWORK Cocoa)
+if(APPLE)
+    find_library(COCOA_FRAMEWORK Cocoa)
+    set(LINKED_LIBS
+        ${COCOA_FRAMEWORK}
+        )
+elseif(LINUX)
+    set(LINKED_LIBS
+        pthread
+        )
+    message(${LINKED_LIBS})
+endif()
 
-link_directories(
-    /usr/local/Cellar/ffmpeg@2.8/2.8.15_3/lib
-    /usr/local/lib
+set(LINKED_LIBS
+    ${FFMPEG_LIBRARIES}
+    ${SDL_LIBRARIES}
+    ${LINKED_LIBS}
     )
 
 foreach(tutorial ${ffmpeg_tutorial_source_files})
     string(REPLACE ".c" "" exec ${tutorial})
     add_executable(${exec} ${tutorial})
     target_link_libraries(${exec}
-        ${COCOA_FRAMEWORK}
-        avformat
-        avcodec
-        swresample
-        swscale
-        avutil
-        SDLmain
-        SDL
+        ${LINKED_LIBS}
         )
 endforeach()
