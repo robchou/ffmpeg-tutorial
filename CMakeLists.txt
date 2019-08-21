@@ -43,6 +43,7 @@ if(APPLE)
 elseif(LINUX)
     set(LINKED_LIBS
         pthread
+        m
         )
     message(${LINKED_LIBS})
 endif()
